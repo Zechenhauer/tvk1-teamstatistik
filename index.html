@@ -131,7 +131,7 @@
         }
 
         .team-stat-subtext {
-            font-size: 0.68rem;
+            font-size: 0.65rem;
             color: var(--accent-gold);
             margin-top: 3px;
             font-weight: 600;
@@ -388,13 +388,13 @@
                 <div class="team-stat-value" id="teamStatAvg" style="color: var(--accent-gold);">0.00</div>
                 <div class="team-stat-label">Team Durchschnitt</div>
             </div>
-            <div class="team-stat-box">
-                <div class="team-stat-value" id="teamStat140Val">0</div>
+            <div class="team-stat-box" style="border-color: var(--accent-gold);">
+                <div class="team-stat-value" id="teamStat140Val" style="color: var(--accent-gold);">0</div>
                 <div class="team-stat-subtext" id="teamStat140Name">-</div>
                 <div class="team-stat-label">Meiste 140er</div>
             </div>
             
-            <!-- Linke Groß-Box: Top Match-Bilanzen mit Zusammenfassung bei gleicher Bilanz -->
+            <!-- Linke Groß-Box: Top Match-Bilanzen -->
             <div class="team-stat-box wide-box">
                 <div class="large-items-container" id="teamStatTop3Container">
                     <div style="color:var(--text-muted); font-size:0.7rem; text-align:center;">Lade Bilanzen...</div>
@@ -631,7 +631,7 @@
             });
         });
 
-        // Alle Spieler nach Bilanz sortieren
+        // Top Match-Bilanzen gruppieren nach gleicher Bilanz
         let allPlayerBilanzen = Object.entries(playerMatchStats).map(([name, stats]) => {
             let total = stats.wins + stats.losses;
             let winRate = total > 0 ? stats.wins / total : 0;
@@ -643,16 +643,14 @@
             return b.wins - a.wins;
         });
 
-        // Gruppierung nach gleicher Bilanz (W:L), damit Spieler nebeneinander stehen
         let groupedBilanzen = [];
         let rankCounter = 1;
-        
         allPlayerBilanzen.forEach((p) => {
             let existingGroup = groupedBilanzen.find(g => g.wins === p.wins && g.losses === p.losses);
             if (existingGroup) {
                 existingGroup.names.push(p.name);
             } else {
-                if (groupedBilanzen.length < 3) { // Zeige bis zu 3 Ränge/Zeilen
+                if (groupedBilanzen.length < 3) {
                     let medal = rankCounter === 1 ? '🥇 ' : (rankCounter === 2 ? '🥈 ' : '🥉 ');
                     groupedBilanzen.push({
                         wins: p.wins,
@@ -668,11 +666,10 @@
         let top3HTML = '';
         if (groupedBilanzen.length > 0) {
             groupedBilanzen.forEach(group => {
-                let combinedNames = group.names.join(', ');
                 top3HTML += `
                     <div class="large-item-row">
                         <div class="large-item-val">${group.wins}:${group.losses} S/N</div>
-                        <div class="large-item-name">${group.medal}${combinedNames}</div>
+                        <div class="large-item-name">${group.medal}${group.names.join(', ')}</div>
                     </div>
                 `;
             });
@@ -681,7 +678,7 @@
         }
         document.getElementById('teamStatTop3Container').innerHTML = top3HTML;
 
-        // Meiste 180er & 140er ermitteln
+        // Meiste 180er ermitteln
         let top180Player = "-";
         let top180Total = 0;
         Object.entries(player180Counts).forEach(([name, count]) => {
@@ -691,17 +688,24 @@
             }
         });
 
-        let top140Player = "-";
-        let top140Total = 0;
+        // Meiste 140er ermitteln (Sammeln aller Spieler mit Bestwert)
+        let max140Val = 0;
+        let top140PlayersMap = {};
         Object.entries(player140Counts).forEach(([name, count]) => {
-            if (count > top140Total) {
-                top140Total = count;
-                top140Player = name;
+            if (count > max140Val) {
+                max140Val = count;
+                top140PlayersMap = {};
+                top140PlayersMap[name] = true;
+            } else if (count === max140Val && count > 0) {
+                top140PlayersMap[name] = true;
             }
         });
 
-        document.getElementById('teamStat140Val').innerText = top140Total > 0 ? `${top140Total}x 140` : '0';
-        document.getElementById('teamStat140Name').innerText = top140Total > 0 ? top140Player : '-';
+        let top140List = Object.keys(top140PlayersMap);
+        let top140Text = top140List.length > 0 ? top140List.join(', ') : '-';
+
+        document.getElementById('teamStat140Val').innerText = max140Val > 0 ? `${max140Val}x 140` : '0';
+        document.getElementById('teamStat140Name').innerText = top140Text;
 
         let shortGamePlayersList = Object.keys(shortGamePlayersMap);
         let shortGamePlayerText = shortGamePlayersList.length > 0 ? shortGamePlayersList.join(', ') : 'Kein Short Leg';
@@ -717,7 +721,7 @@
             </div>
             <div class="large-item-row">
                 <div class="large-item-val">${bestShortGameDarts < 999 ? bestShortGameDarts + ' Darts' : '-'}</div>
-                <div class="large-item-name" style="font-size: 0.68rem;">⚡ ${shortGamePlayerText}</div>
+                <div class="large-item-name" style="font-size: 0.65rem;">⚡ ${shortGamePlayerText}</div>
             </div>
         `;
         document.getElementById('teamStatHighlightsContainer').innerHTML = highlightsHTML;
